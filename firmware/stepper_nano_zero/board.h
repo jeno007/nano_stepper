@@ -51,10 +51,10 @@
 //#define NEMA17_SMART_STEPPER_3_21_2017
 
 //uncomment this if you are using the Mechaduino hardware
-//#define MECHADUINO_HARDWARE
+#define MECHADUINO_HARDWARE
 
 //uncomment this if you are using Big Tree Tech S42A
-#define BTT_S42A_HARDWARE
+//#define BTT_S42A_HARDWARE
 
 //uncomment this if you are using MKS Servo42
 //#define MKS_SERVO42_HARDWARE
@@ -122,7 +122,7 @@
 #define VERSION "FW: 0.40" //this is what prints on LCD during splash screen
 
 //Define this to allow command out serial port, else hardware serial is debug log
-//#define CMD_SERIAL_PORT
+#define CMD_SERIAL_PORT
 
 #define SERIAL_BAUD (115200) //baud rate for the serial ports
 
