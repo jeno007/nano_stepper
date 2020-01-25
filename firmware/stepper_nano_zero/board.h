@@ -40,36 +40,68 @@
 #define __BOARD_H__
 
 #include <Arduino.h>
+#define _CAT(a, ...)       a ## __VA_ARGS__
+#define SWITCH_ENABLED_    1
+#define ENABLED(b)         _CAT(SWITCH_ENABLED_, b)
 
+//uncomment the follow lines if using the NEMA 17 hardware with silkscreen date of older than 3/21/2017
+//#define NEMA17_SMART_STEPPER_OLD
+
+//uncomment the follow lines if using the NEMA 17 hardware with silkscreen date of 3/21/2017 or newer
+//#define NEMA17_SMART_STEPPER_3_21_2017
 
 //uncomment this if you are using the Mechaduino hardware
 //#define MECHADUINO_HARDWARE
 
+//uncomment this if you are using Big Tree Tech S42A
+#define BTT_S42A_HARDWARE
+
+//uncomment this if you are using MKS Servo42
+//#define MKS_SERVO42_HARDWARE
 
 //uncomment the follow lines if using the NEMA 23 10A hardware
 //#define NEMA_23_10A_HW
 
-//uncomment the following if the board uses the A5995 driver (NEMA 23 3.2A boards)
-//#define A5995_DRIVER
+//uncomment the follow lines if using the NEMA 23 10A hardware
+//#define NEMA_23_3200MA_HW
 
-//The March 21 2017 NEMA 17 Smart Stepper has changed some pin outs
-// A1 was changed to read motor voltage, hence SW4 is now using D4
-// comment out this next line if using the older hardware
-#define NEMA17_SMART_STEPPER_3_21_2017
 
-#if defined(MECHADUINO_HARDWARE) && defined(NEMA17_SMART_STEPPER_3_21_2017)
-#error "Cannot have both MECHADUINO_HARDWARE and NEMA17_SMART_STEPPER_3_21_2017 defined in board.h"
+#if ENABLED(NEMA_23_3200MA_HW)
+   #define A5995_DRIVER
+#endif
+
+
+
+//Sanity check
+#if 1 < 0 \
++  ENABLED(MECHADUINO_HARDWARE) \
++  ENABLED(BTT_S42A_HARDWARE) \
++  ENABLED(MKS_SERVO42_HARDWARE) \
++  ENABLED(NEMA_23_10A_HW) \
++  ENABLED(NEMA17_SMART_STEPPER_3_21_2017) \
++  ENABLED(NEMA17_SMART_STEPPER_OLD) \
++  ENABLED(NEMA_23_3200MA_HW)
+#error "Please select only one board type in board.h"
+#endif
+
+#if 0 == 0 \
++  ENABLED(MECHADUINO_HARDWARE) \
++  ENABLED(BTT_S42A_HARDWARE) \
++  ENABLED(MKS_SERVO42_HARDWARE) \
++  ENABLED(NEMA_23_10A_HW) \
++  ENABLED(NEMA17_SMART_STEPPER_3_21_2017) \
++  ENABLED(NEMA17_SMART_STEPPER_OLD) \
++  ENABLED(NEMA_23_3200MA_HW)
+#error "Board type is required in board.h"
+#endif
+
+#if ENABLED(NEMA_23_3200MA_HW)
+   #define A5995_DRIVER
 #endif
 
 //The MKS Servo42 uses the A1333_Encoder
-// Please uncomment this line and make sure the NEMA17_SMART_STEPPER_3_21_2017 is
-// uncommented for the Servo42
-//#define A1333_ENCODER
-
-#ifdef A5995_DRIVER
-#ifdef NEMA17_SMART_STEPPER_3_21_2017
-#error "Only NEMA17_SMART_STEPPER_3_21_2017 or A5595_DRIVER may be defined"
-#endif
+#if ENABLED(MKS_SERVO42_HARDWARE)
+  #define A1333_ENCODER
 #endif
 
 #define NZS_FAST_CAL // define this to use 32k of flash for fast calibration table
@@ -96,9 +128,9 @@
 
 //This section is for using the step and dir pins as serial port
 // when the enable pin is inactive.
-#ifndef MECHADUINO_HARDWARE
-#define USE_STEP_DIR_SERIAL
-#define STEP_DIR_BAUD (19200) //this is the baud rate we will use
+#if defined(NEMA17_SMART_STEPPER_3_21_2017) || defined(NEMA17_SMART_STEPPER_OLD) || defined(NEMA_23_3200MA_HW) || defined(NEMA_23_10A_HW)
+//#define USE_STEP_DIR_SERIAL //Not needed to run stepper in discreet step/dir mode
+//#define STEP_DIR_BAUD (19200) //this is the baud rate we will use
 #endif
 
 
@@ -245,66 +277,99 @@ typedef enum {
 
 //mechaduio and Arduino Zero has defined serial ports differently than NZS
 #ifdef MECHADUINO_HARDWARE
-#warning "Compiling source for Mechaduino NOT NZS"
-#define DISABLE_LCD
-#undef  Serial5
-#define Serial5 Serial 
+  #warning "Compiling source for Mechaduino"
+  #define DISABLE_LCD
+#endif
+
+//mechaduio and Arduino Zero has defined serial ports differently than NZS
+#ifdef BTT_S42A_HARDWARE
+  #warning "Compiling source for Big Tree Tech S42A"
+  #define DISABLE_LCD
+#endif
+
+#if defined(MECHADUINO_HARDWARE) || defined(BTT_S42A_HARDWARE)
+  #undef  Serial5
+  #define Serial5 Serial 
 #else
-#define SerialUSB Serial
+  #define SerialUSB Serial
 #endif 
 
-#define PIN_TXD		(30)
-#define PIN_RXD		(31)
+#if defined(MECHADUINO_HARDWARE) || defined(NEMA17_SMART_STEPPER_3_21_2017) || defined(NEMA17_SMART_STEPPER_OLD) || defined(NEMA_23_3200MA_HW) || defined(NEMA_23_10A_HW)
+  #define PIN_TXD		(30)
+  #define PIN_RXD		(31)
+#endif
+
+#define DIR_PIN 1
+
+#ifdef BTT_S42A_HARDWARE
+  #undef DIR_PIN
+  #define DIR_PIN 2
+#endif
 
 #define PIN_STEP_INPUT  (0)
-#define PIN_DIR_INPUT   (1)
+#define PIN_DIR_INPUT   (DIR_PIN)
 
 #define PIN_MOSI        (23)
 #define PIN_SCK         (24)
 #define PIN_MISO        (22)
 
+#if defined(MECHADUINO_HARDWARE) && defined(USE_STEP_DIR_SERIAL)
+  #error "Step/Dir UART not supported on Mechaduino yet"
+#endif
+
 #ifdef MECHADUINO_HARDWARE
-#ifdef USE_STEP_DIR_SERIAL
-#error "Step/Dir UART not supported on Mechaduino yet"
+  #define PIN_ERROR     (19)  //analogInputToDigitalPin(PIN_A5))
 #endif
 
-#define PIN_ERROR 		(19)  //analogInputToDigitalPin(PIN_A5))
-#else //not Mechaduino hardware
+#if defined(NEMA17_SMART_STEPPER_OLD) || defined(BTT_S42A_HARDWARE)
+  #define PIN_ERROR     (10)  //analogInputToDigitalPin(PIN_A5))
+  #define PIN_SW1    (19)//analogInputToDigitalPin(PIN_A5))
+  #define PIN_SW3   (14)//analogInputToDigitalPin(PIN_A0))
+  #define PIN_SW4    (15)//analogInputToDigitalPin(PIN_A1))
+  #define PIN_ENABLE  (3)
+#endif
+
+#ifdef BTT_S42A_HARDWARE
+  #define PIN_SW4   (15)//analogInputToDigitalPin(PIN_A1)) 
+#endif
+
 #ifdef NEMA17_SMART_STEPPER_3_21_2017
-#define PIN_SW1		(19)//analogInputToDigitalPin(PIN_A5))
-#define PIN_SW3		(14)//analogInputToDigitalPin(PIN_A0))
-
-#ifdef A1333_ENCODER //the MKS Servo42 uses A1 for this switch
-#define PIN_SW4		(15)//analogInputToDigitalPin(PIN_A1))
-#else
-#define PIN_SW4		(2)//D2
+  #define PIN_ERROR  (3)
+  #define PIN_SW1    (19)//analogInputToDigitalPin(PIN_A5))
+  #define PIN_SW3    (14)//analogInputToDigitalPin(PIN_A0))
+  #define PIN_SW4    (2)//D2
+  #define PIN_ENABLE (10)
+  #define PIN_VMOTOR (A1) //analog pin for the motor
 #endif
 
-#define PIN_ENABLE	(10)
-#define PIN_ERROR	(3)
-
-#define PIN_VMOTOR (A1) //analog pin for the motor
-
-#else
-#define PIN_SW1		(19)//analogInputToDigitalPin(PIN_A5))
-#define PIN_SW3		(14)//analogInputToDigitalPin(PIN_A0))
-#define PIN_SW4		(15)//analogInputToDigitalPin(PIN_A1))
-#define PIN_ERROR		(10)
+#if defined(A1333_ENCODER) && defined(MKS_SERVO42_HARDWARE) //the MKS Servo42 uses A1 for this switch
+  #define PIN_ERROR  (3)
+  #define PIN_SW1    (19)//analogInputToDigitalPin(PIN_A5))
+  #define PIN_SW3    (14)//analogInputToDigitalPin(PIN_A0))
+  #define PIN_SW4    (2)//D2
+  #define PIN_ENABLE (10)
 #endif
 
-#endif
-
-#ifdef A5995_DRIVER
-#define PIN_ENABLE	(3)
+#if defined(A5995_DRIVER) && defined(NEMA_23_3200MA_HW)
+  #define PIN_ERROR  (10)
+  #define PIN_SW1    (19)//analogInputToDigitalPin(PIN_A5))
+  #define PIN_SW3    (14)//analogInputToDigitalPin(PIN_A0))
+  #define PIN_SW4    (2)//D2
+  #define PIN_ENABLE (3)
+  #define PIN_VMOTOR (A1) //analog pin for the motor
 #endif
 
 #define PIN_SCL (21)
 #define PIN_SDA (20)
-#define PIN_USB_PWR (38) // this pin is high when usb is connected
+
+#if defined(NEMA17_SMART_STEPPER_OLD) || defined(NEMA17_SMART_STEPPER_3_21_2017) || defined(MECHADUINO_HARDWARE) || defined(NEMA_23_3200MA_HW)
+  #define PIN_USB_PWR (38) // this pin is high when usb is connected
+#endif
 
 #define PIN_AS5047D_CS  (16)//analogInputToDigitalPin(PIN_A2))
-#ifndef MECHADUINO_HARDWARE
-#define PIN_AS5047D_PWR	(11) //pull low to power on AS5047D
+
+#if defined(NEMA17_SMART_STEPPER_OLD) || defined(NEMA17_SMART_STEPPER_3_21_2017) || defined(NEMA_23_10A_HW) || defined(NEMA_23_3200MA_HW)
+  #define PIN_AS5047D_PWR	(11) //pull low to power on AS5047D
 #endif
 
 //these pins use the TIMER in the A4954 driver
@@ -342,11 +407,9 @@ typedef enum {
 #endif
 
 
-
-
 #ifdef NEMA_23_10A_HW
-#undef PIN_YELLOW_LED
-#define PIN_YELLOW_LED  	(26) //TXLED (PA27)
+  #undef PIN_YELLOW_LED
+  #define PIN_YELLOW_LED  	(26) //TXLED (PA27)
 #endif //NEMA_23_10A_HW
 
 
@@ -354,11 +417,13 @@ typedef enum {
 #define PIN_A4954_IN3		(5)
 #define PIN_A4954_IN4		(6)
 #define PIN_A4954_IN2		(7)
+
 #ifdef MECHADUINO_HARDWARE
-#define PIN_A4954_IN1		(8)
+  #define PIN_A4954_IN1		(8)
 #else
-#define PIN_A4954_IN1		(18) //analogInputToDigitalPin(PIN_A4))
+  #define PIN_A4954_IN1		(18) //analogInputToDigitalPin(PIN_A4))
 #endif
+
 #define PIN_A4954_VREF34	(4)
 #define PIN_A4954_VREF12	(9)
 
@@ -366,6 +431,7 @@ typedef enum {
 
 //Here are some useful macros
 #define DIVIDE_WITH_ROUND(x,y)  (((x)+(y)/2)/(y))
+
 
 
 #define GPIO_LOW(pin) {PORT->Group[g_APinDescription[(pin)].ulPort].OUTCLR.reg = (1ul << g_APinDescription[(pin)].ulPin);}
