@@ -648,7 +648,7 @@ void NZS::begin(void)
 #endif
 
 	LOG("Power up!");
-	pinMode(PIN_USB_PWR, INPUT);
+/*	pinMode(PIN_USB_PWR, INPUT);
 
 #ifndef MECHADUINO_HARDWARE
 	if (digitalRead(PIN_USB_PWR))
@@ -668,6 +668,7 @@ void NZS::begin(void)
 		WARNING("USB Not connected");
 	}
 #endif
+*/
 
 	validateAndInitNVMParams();
 

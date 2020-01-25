@@ -54,10 +54,10 @@
 //#define MECHADUINO_HARDWARE
 
 //uncomment this if you are using Big Tree Tech S42A
-#define BTT_S42A_HARDWARE
+//#define BTT_S42A_HARDWARE
 
 //uncomment this if you are using MKS Servo42
-//#define MKS_SERVO42_HARDWARE
+#define MKS_SERVO42_HARDWARE
 
 //uncomment the follow lines if using the NEMA 23 10A hardware
 //#define NEMA_23_10A_HW
@@ -102,6 +102,7 @@
 //The MKS Servo42 uses the A1333_Encoder
 #if ENABLED(MKS_SERVO42_HARDWARE)
   #define A1333_ENCODER
+  #define DISABLE_LCD
 #endif
 
 #define NZS_FAST_CAL // define this to use 32k of flash for fast calibration table
@@ -122,7 +123,7 @@
 #define VERSION "FW: 0.40" //this is what prints on LCD during splash screen
 
 //Define this to allow command out serial port, else hardware serial is debug log
-//#define CMD_SERIAL_PORT
+#define CMD_SERIAL_PORT
 
 #define SERIAL_BAUD (115200) //baud rate for the serial ports
 
